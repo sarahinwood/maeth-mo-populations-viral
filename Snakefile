@@ -31,9 +31,8 @@ rule target:
     input:
         expand('output/depth_analysis/{sample}_boxplot.jpeg', sample=all_samples),
         expand('output/depth_stats/{sample}/wilcox_res.txt', sample=all_samples),
-        'output/depth_analysis/boxplot_panel.pdf'
-
-##GC depth scatterplots?
+        'output/depth_analysis/depth_boxplot_panel.pdf',
+        'output/depth_analysis/meandepth_boxplot_panel.pdf'
 
 rule depth_stat_test:
     input:
@@ -51,26 +50,46 @@ rule depth_stat_test:
 
 rule depth_boxplot_panel:
     input:
-        st_depth_file_i44 = 'output/samtools_depth/filtered/filtered_indiv44_maethm_lincoln_depth.out',
-        st_depth_file_i4 = 'output/samtools_depth/filtered/filtered_indiv4_maethm_lincoln_depth.out',
-        st_depth_file_i60 = 'output/samtools_depth/filtered/filtered_indiv60_maethm_lincoln_depth.out',
-        st_depth_file_i68 = 'output/samtools_depth/filtered/filtered_indiv68_maethm_lincoln_depth.out',
-        st_depth_file_i76 = 'output/samtools_depth/filtered/filtered_indiv76_maethm_lincoln_depth.out',
+        st_depth_file_i44 = 'output/samtools_depth/indiv44_maethm_lincoln_depth.out',
+        st_depth_file_i4 = 'output/samtools_depth/indiv4_maethm_lincoln_depth.out',
+        st_depth_file_i68 = 'output/samtools_depth/indiv68_maethm_lincoln_depth.out',
+        st_depth_file_i76 = 'output/samtools_depth/indiv76_maethm_lincoln_depth.out',
         mh_gc_table = 'data/MO_contig_ids.csv'
     output:
-        boxplot_panel = 'output/depth_analysis/boxplot_panel.pdf'
+        boxplot_panel = 'output/depth_analysis/depth_boxplot_panel.pdf'
     singularity:
         tidyverse_container
     threads:
         20
     log:
-        'output/logs/boxplots/panel_depth_boxplot.log'
+        'output/logs/boxplots/depth_boxplot_panel.log'
     script:
         'src/depth_boxplot_panel.R'
 
+rule meandepth_boxplot_panel:
+    input:
+        st_depth_file_i44 = 'output/samtools_coverage/indiv44_maethm_lincoln/coverage.out',
+        st_depth_file_i4 = 'output/samtools_coverage/indiv4_maethm_lincoln/coverage.out',
+        st_depth_file_i68 = 'output/samtools_coverage/indiv68_maethm_lincoln/coverage.out',
+        st_depth_file_i76 = 'output/samtools_coverage/indiv76_maethm_lincoln/coverage.out',
+        mh_gc_table = 'data/MO_contig_ids.csv'
+    output:
+        boxplot_panel = 'output/depth_analysis/meandepth_boxplot_panel.pdf',
+        boxplot_panel_nofacet = 'output/depth_analysis/meandepth_boxplot_panel_nofacet.pdf',
+        depth_table = 'output/depth_analysis/meandepth_table.csv'
+    singularity:
+        tidyverse_container
+    threads:
+        20
+    log:
+        'output/logs/boxplots/meandepth_boxplot_panel.log'
+    script:
+        'src/meandepth_boxplot_panel.R'
+
+##this is using every depth measurement - should it be mean depth instead? 2000 BUSCO contigs, 7+2 viral
 rule depth_boxplot:
     input:
-        samtools_depth = 'output/samtools_depth/filtered/filtered_{sample}_depth.out',
+        samtools_depth = 'output/samtools_depth/{sample}_depth.out',
         scaffold_id_table = 'data/MO_contig_ids.csv'
     output:
         boxplot_y_zoom = 'output/depth_analysis/{sample}_boxplot_y_zoom.pdf',
@@ -102,16 +121,6 @@ rule samtools_coverage:
         '{input.bam} '
         '-o {output.coverage_out} '
         '2> {log}'
-
-##can I loop through this separating each sample depth file into chromosome files somehow?
-rule filter_depth_file:
-    input:
-        depth_out = 'output/samtools_depth/{sample}_depth.out',
-        viral_busco_ids_list = 'data/busco_viral_contig_ids.txt'
-    output:
-        filtered_depth = 'output/samtools_depth/filtered/filtered_{sample}_depth.out'
-    shell:
-        'egrep -wf {input.viral_busco_ids_list} {input.depth_out} > {output.filtered_depth}'
 
 rule samtools_depth:
     input:

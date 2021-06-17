@@ -33,11 +33,10 @@ mh_gc_table <- snakemake@input[["mh_gc_table"]]
 ########
 
 ## read in depth tables ##
-st_depth_names <- c("#Name", "BP", "depth")
-st_depth_44 <- fread(st_depth_file_i44, col.names=st_depth_names)
-st_depth_4 <- fread(st_depth_file_i4, col.names=st_depth_names)
-st_depth_68 <- fread(st_depth_file_i68, col.names=st_depth_names)
-st_depth_76 <- fread(st_depth_file_i76, col.names=st_depth_names)
+st_depth_44 <- fread(st_depth_file_i44)
+st_depth_4 <- fread(st_depth_file_i4)
+st_depth_68 <- fread(st_depth_file_i68)
+st_depth_76 <- fread(st_depth_file_i76)
 
 ##add sample label so tables can be joined
 st_depth_44$Sample <- "44"
@@ -53,7 +52,7 @@ scaffold_table <- subset(full_scaffold_table, !(plot_label=="Other contig"))
 scaffold_table$plot_label <- factor(scaffold_table$plot_label, levels=c("BUSCO contig", "BUSCO and viral contig", "Viral contig"))
 
 ## full table for plotting ##
-st_depth_labels <- merge(full_depth_table, scaffold_table, by="#Name", all.y=TRUE)
+st_depth_labels <- merge(full_depth_table, scaffold_table, by.x="#rname", by.y="#Name", all.y=TRUE)
 
 ##########################
 ##making panel box plot ##
@@ -61,12 +60,12 @@ st_depth_labels <- merge(full_depth_table, scaffold_table, by="#Name", all.y=TRU
 
 ##height/width in inches
 pdf(snakemake@output[["boxplot_panel"]], height=7.5, width=10)
-ggplot(st_depth_labels, aes(x=plot_label, y=depth, colour=plot_label))+
-  geom_boxplot(outlier.shape=NA)+
+ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
+  geom_boxplot()+
   theme_bw(base_size=18)+
-  ylab("Depth")+
+  ylab("Mean sequencing depth")+
   scale_colour_viridis(discrete=TRUE, direction=-1)+
-  coord_cartesian(ylim = c(0,225))+
+  coord_cartesian(ylim = c(0,40))+
   theme(axis.title.x=element_blank(),
     axis.text.x=element_blank(),
     axis.ticks.x=element_blank(),
@@ -74,8 +73,26 @@ ggplot(st_depth_labels, aes(x=plot_label, y=depth, colour=plot_label))+
   facet_wrap(~Sample)
 dev.off()
 
+pdf(snakemake@output[["boxplot_panel_nofacet"]], height=7.5, width=10)
+ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
+  geom_boxplot()+
+  theme_bw(base_size=18)+
+  ylab("Mean sequencing depth")+
+  scale_colour_viridis(discrete=TRUE, direction=-1)+
+  coord_cartesian(ylim = c(0,40))+
+  theme(axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    legend.title = element_blank(),
+    strip.background = element_blank(),
+    strip.text.x = element_blank())+
+  facet_wrap(~Sample)
+dev.off()
+
+fwrite(st_depth_labels, snakemake@output[['depth_table']])
+
 ##add strip.background = element_blank(),
-    #strip.text.x = element_blank()
+    strip.text.x = element_blank()
     ##to remove facet wrap titles
 
 #write log
