@@ -50,7 +50,8 @@ full_depth_table <- rbind(st_depth_44, st_depth_4, st_depth_68, st_depth_76)
 ## scaffold ID table ##
 full_scaffold_table <- fread(mh_gc_table, header=TRUE)
 scaffold_table <- subset(full_scaffold_table, !(plot_label=="Other contig"))
-scaffold_table$plot_label <- factor(scaffold_table$plot_label, levels=c("BUSCO contig", "BUSCO and viral contig", "Viral contig"))
+scaffold_table$plot_label <- tstrsplit(scaffold_table$plot_label, " and", keep=c(1))
+scaffold_table$plot_label <- factor(scaffold_table$plot_label, levels=c("BUSCO contig", "Viral contig"))
 
 ## full table for plotting ##
 st_depth_labels <- merge(full_depth_table, scaffold_table, by="#Name", all.y=TRUE)
@@ -65,18 +66,17 @@ ggplot(st_depth_labels, aes(x=plot_label, y=depth, colour=plot_label))+
   geom_boxplot(outlier.shape=NA)+
   theme_bw(base_size=18)+
   ylab("Depth")+
+  stat_summary(fun=mean, geom="point", colour="grey35")+
   scale_colour_viridis(discrete=TRUE, direction=-1)+
   coord_cartesian(ylim = c(0,225))+
   theme(axis.title.x=element_blank(),
     axis.text.x=element_blank(),
     axis.ticks.x=element_blank(),
-    legend.title = element_blank())+
+    legend.title = element_blank(),
+    strip.background = element_blank(),
+    strip.text.x = element_blank())+
   facet_wrap(~Sample)
 dev.off()
-
-##add strip.background = element_blank(),
-    #strip.text.x = element_blank()
-    ##to remove facet wrap titles
 
 #write log
 sessionInfo()

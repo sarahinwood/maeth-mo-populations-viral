@@ -31,12 +31,27 @@ rule target:
     input:
         expand('output/depth_analysis/{sample}_boxplot.jpeg', sample=all_samples),
         expand('output/depth_stats/{sample}/wilcox_res.txt', sample=all_samples),
+        expand('output/depth_stats_no/{sample}/wilcox_res.txt', sample=all_samples),
         'output/depth_analysis/depth_boxplot_panel.pdf',
-        'output/depth_analysis/meandepth_boxplot_panel.pdf'
+        'output/depth_analysis/meandepth_boxplot_panel_nofacet.svg'
+
+rule depth_stat_test_no:
+    input:
+        mo_gc_table = 'data/MO_contig_ids.csv',
+        coverage_file = 'output/samtools_coverage/{sample}/coverage.out'
+    output:
+        shapiro_res = 'output/depth_stats_no/{sample}/gc_shapiro_res.txt',
+        summary_stats = 'output/depth_stats_no/{sample}/summary_stats.txt',
+        kruskal_res = 'output/depth_stats_no/{sample}/kruskal_res.txt',
+        wilcox_res = 'output/depth_stats_no/{sample}/wilcox_res.txt'
+    log:
+        'output/logs/depth_stats_no/{sample}_depth_stats.log'
+    script:
+        'src/depth_stat_test.R'
 
 rule depth_stat_test:
     input:
-        mh_gc_table = 'data/MO_contig_ids.csv',
+        mo_gc_table = 'data/MO_contig_ids.csv',
         coverage_file = 'output/samtools_coverage/{sample}/coverage.out'
     output:
         shapiro_res = 'output/depth_stats/{sample}/gc_shapiro_res.txt',
@@ -75,8 +90,7 @@ rule meandepth_boxplot_panel:
         mh_gc_table = 'data/MO_contig_ids.csv'
     output:
         boxplot_panel = 'output/depth_analysis/meandepth_boxplot_panel.pdf',
-        boxplot_panel_nofacet = 'output/depth_analysis/meandepth_boxplot_panel_nofacet.pdf',
-        depth_table = 'output/depth_analysis/meandepth_table.csv'
+        boxplot_panel_nofacet = 'output/depth_analysis/meandepth_boxplot_panel_nofacet.svg'
     singularity:
         tidyverse_container
     threads:

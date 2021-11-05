@@ -49,7 +49,9 @@ full_depth_table <- rbind(st_depth_44, st_depth_4, st_depth_68, st_depth_76)
 ## scaffold ID table ##
 full_scaffold_table <- fread(mh_gc_table, header=TRUE)
 scaffold_table <- subset(full_scaffold_table, !(plot_label=="Other contig"))
-scaffold_table$plot_label <- factor(scaffold_table$plot_label, levels=c("BUSCO contig", "BUSCO and viral contig", "Viral contig"))
+scaffold_table$plot_label <- tstrsplit(scaffold_table$plot_label, " and", keep=c(1))
+scaffold_table <- subset(scaffold_table, !(plot_label=="BUSCO"))
+scaffold_table$plot_label <- factor(scaffold_table$plot_label, levels=c("BUSCO contig", "Viral contig"))
 
 ## full table for plotting ##
 st_depth_labels <- merge(full_depth_table, scaffold_table, by.x="#rname", by.y="#Name", all.y=TRUE)
@@ -65,7 +67,7 @@ ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
   theme_bw(base_size=18)+
   ylab("Mean sequencing depth")+
   scale_colour_viridis(discrete=TRUE, direction=-1)+
-  coord_cartesian(ylim = c(0,40))+
+  coord_cartesian(ylim = c(0,140))+
   theme(axis.title.x=element_blank(),
     axis.text.x=element_blank(),
     axis.ticks.x=element_blank(),
@@ -73,13 +75,12 @@ ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
   facet_wrap(~Sample)
 dev.off()
 
-pdf(snakemake@output[["boxplot_panel_nofacet"]], height=7.5, width=10)
-ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
+panel <- ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
   geom_boxplot()+
   theme_bw(base_size=18)+
   ylab("Mean sequencing depth")+
   scale_colour_viridis(discrete=TRUE, direction=-1)+
-  coord_cartesian(ylim = c(0,40))+
+  coord_cartesian(ylim = c(0,140))+
   theme(axis.title.x=element_blank(),
     axis.text.x=element_blank(),
     axis.ticks.x=element_blank(),
@@ -87,13 +88,7 @@ ggplot(st_depth_labels, aes(x=plot_label, y=meandepth, colour=plot_label))+
     strip.background = element_blank(),
     strip.text.x = element_blank())+
   facet_wrap(~Sample)
-dev.off()
-
-fwrite(st_depth_labels, snakemake@output[['depth_table']])
-
-##add strip.background = element_blank(),
-    strip.text.x = element_blank()
-    ##to remove facet wrap titles
+ggsave(plot=panel, file=snakemake@output[["boxplot_panel_nofacet"]], height=7.5, width=10)
 
 #write log
 sessionInfo()

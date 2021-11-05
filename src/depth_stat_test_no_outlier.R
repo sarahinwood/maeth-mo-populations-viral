@@ -36,6 +36,8 @@ gc_depth_stats <- merge(gc_table, depth_table, by.x="#Name", by.y="#rname")
 
 ##remove other
 gc_depth_stats <- subset(gc_depth_stats, !(plot_label=="Other contig"))
+gc_depth_stats <- subset(gc_depth_stats, !(`#Name`=="scf1605"))
+
 gc_depth_stats$plot_label <- str_replace_all(gc_depth_stats$plot_label, "BUSCO and viral contig", "BUSCO contig")
 
 
